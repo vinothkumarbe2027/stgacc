@@ -5,42 +5,45 @@
 
 trigger:
 - main
-
+ 
 pool:
-  vmImage: ubuntu-latest
-
+  vmImage: 'ubuntu-latest'
+ 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
-
-- task: TerraformInstaller@1
+# 1Checkout Repo
+- checkout: self
+ 
+# 2 Login to Azure using Service Connection
+- task: AzureCLI@2
+  displayName: 'Azure Login'
   inputs:
-    terraformVersion: 'latest'
-
-- task: TerraformTask@5
-  inputs:
-    provider: 'azurerm'
-    command: 'init'
-    backendServiceArm: 'testserviceconnection'
-    backendAzureRmResourceGroupName: 'rg-tfstate'
-    backendAzureRmStorageAccountName: 'sttfstate007'
-    backendAzureRmContainerName: 'devtfstate'
-    backendAzureRmKey: 'stgnew.terraform.state'
-- task: TerraformTask@5
-  inputs:
-    provider: 'azurerm'
-    command: 'plan'
-    environmentServiceNameAzureRM: 'testserviceconnection'
-    environmentAzureRmUseIdTokenGeneration: true
-- task: TerraformTask@5
-  inputs:
-    provider: 'azurerm'
-    command: 'apply'
-    commandOptions: '--auto-approve'
-    environmentServiceNameAzureRM: 'testserviceconnection'
-    environmentAzureRmUseIdTokenGeneration: true
+    azureSubscription: 'f2f9ac2b-5723-4bc5-b23a-07927ce38bb7'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      echo "Logged in successfully"
+ 
+# 3️ Install Terraform Manually
+- bash: |
+      sudo apt-get update -y
+      sudo apt-get install -y unzip
+      wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
+      unzip terraform_1.7.5_linux_amd64.zip
+      sudo mv terraform /usr/local/bin/
+      terraform -version
+  displayName: 'Install Terraform'
+ 
+# 4️ Terraform Init
+- bash: |
+      terraform init
+  displayName: 'Terraform Init'
+ 
+# 5️ Terraform Plan using tfvars
+- bash: |
+      terraform plan -var-file=terraform.tfvars
+  displayName: 'Terraform Plan'
+ 
+# 6️ Terraform Apply using tfvars
+- bash: |
+      terraform apply -var-file=terraform.tfvars -auto-approve
+  displayName: 'Terraform Apply'
