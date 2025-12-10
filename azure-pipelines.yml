@@ -1,8 +1,8 @@
 trigger:
-- none
+- main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 steps:
 #  Checkout Code
@@ -13,38 +13,37 @@ steps:
   displayName: 'Azure Login'
   inputs:
     azureSubscription: 'My-Service-Connection'
-    scriptType: bash
+    scriptType: ps
     scriptLocation: inlineScript
     inlineScript: |
       az account show
 
-#  Install Terraform
-- bash: |
-      sudo apt-get update -y
-      sudo apt-get install -y unzip
-      wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
-      unzip terraform_1.7.5_linux_amd64.zip
-      sudo mv terraform /usr/local/bin/
+#  Install Terraform (Windows)
+- powershell: |
+      Invoke-WebRequest https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_windows_amd64.zip -OutFile terraform.zip
+      Expand-Archive terraform.zip -DestinationPath "$env:AGENT_TEMPDIRECTORY\terraform"
+      Move-Item "$env:AGENT_TEMPDIRECTORY\terraform\terraform.exe" "C:\windows\system32\terraform.exe" -Force
       terraform -version
   displayName: 'Install Terraform'
 
 #  Terraform Init
-- bash: |
-      terraform init \
-        -backend-config="resource_group_name=YOUR-BACKEND-RG" \
-        -backend-config="storage_account_name=YOUR-STORAGE" \
-        -backend-config="container_name=tfstate" \
-        -backend-config="key=linuxvm.tfstate" \
+- powershell: |
+      terraform init `
+        -backend-config="resource_group_name=YOUR-BACKEND-RG" `
+        -backend-config="storage_account_name=YOUR-STORAGE" `
+        -backend-config="container_name=tfstate" `
+        -backend-config="key=windowsvm.tfstate" `
         -reconfigure
   displayName: 'Terraform Init'
 
 #  Terraform Plan
-- bash: |
+- powershell: |
       terraform plan -var="admin_password=$(admin_password)"
   displayName: 'Terraform Plan'
 
-#  Terraform Apply
-- bash: |
+#  Terraform Apply (Auto Approve)
+- powershell: |
       terraform apply -auto-approve -var="admin_password=$(admin_password)"
   displayName: 'Terraform Apply'
+
 
