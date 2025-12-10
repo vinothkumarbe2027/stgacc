@@ -1,8 +1,13 @@
 
-output "storage_account_id" {
-  value = azurerm_storage_account.sa.id
+output "public_ip" {
+  value = azurerm_public_ip.pip.ip_address
 }
 
-output "storage_account_primary_endpoint" {
-  value = azurerm_storage_account.sa.primary_blob_endpoint
+output "private_ip" {
+  value = azurerm_network_interface.nic.private_ip_address
 }
+
+output "vm_id" {
+  value = azurerm_windows_virtual_machine.vm.id
+}
+
